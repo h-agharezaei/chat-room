@@ -6,6 +6,8 @@ import { LeaveRoomDto } from './dto/leave-dto';
 
 @Injectable()
 export class RoomService {
+  private topUsersNumber = 100;
+
   private meSessionId: string = uuidv4();
   private Rooms: User[] = [
     {
@@ -19,12 +21,12 @@ export class RoomService {
       },
     },
   ];
-  getRoleClient = (clients: User[], userRole: UserRole) => {
+  private getRoleClient = (clients: User[], userRole: UserRole) => {
     return clients
       .filter((user) => user.role == userRole)
       .sort((a, b) => (a.joinTime > b.joinTime ? 1 : -1));
   };
-  topClients = () => {
+  private topClients = () => {
     const allClients = this.Rooms.filter(
       (user) => user.sessionId != this.meSessionId,
     );
@@ -35,12 +37,16 @@ export class RoomService {
       ...this.getRoleClient(allClients, UserRole.Member),
       ...this.getRoleClient(allClients, UserRole.Guest),
     ];
-    return topUsers.slice(0, 100);
+    return topUsers.slice(0, this.topUsersNumber);
+  };
+  private getMe = () => {
+    return this.Rooms.find((user) => user.sessionId == this.meSessionId);
   };
   getUsers() {
     return {
+      totalUsers: this.Rooms.length,
       clients: this.topClients(),
-      me: this.Rooms.find((user) => user.sessionId == this.meSessionId),
+      me: this.getMe(),
     };
   }
   join(joinRoomDto: JoinRoomDto) {
